@@ -7,9 +7,26 @@ import { course } from "./data/course.js";
 
 const STORAGE_KEY = "haruling-progress-v1";
 
+function safeGetItem(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // HaruLing remains usable when browser storage is unavailable.
+  }
+}
+
 function readProgress() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    const value = JSON.parse(safeGetItem(STORAGE_KEY) || "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
   } catch {
     return {};
   }
@@ -24,10 +41,10 @@ export default function App() {
   const [checked, setChecked] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [hearts, setHearts] = useState(5);
-  const [showWelcome, setShowWelcome] = useState(!localStorage.getItem("haruling-welcomed"));
+  const [showWelcome, setShowWelcome] = useState(!safeGetItem("haruling-welcomed"));
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    safeSetItem(STORAGE_KEY, JSON.stringify(progress));
   }, [progress]);
 
   const allLessons = useMemo(() => course.units.flatMap((unit) => unit.lessons), []);
@@ -71,7 +88,7 @@ export default function App() {
   }
 
   function closeWelcome() {
-    localStorage.setItem("haruling-welcomed", "yes");
+    safeSetItem("haruling-welcomed", "yes");
     setShowWelcome(false);
   }
 
